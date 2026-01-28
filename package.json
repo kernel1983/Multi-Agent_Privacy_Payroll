@@ -2,11 +2,12 @@
   "name": "multi-agent-payment",
   "version": "1.0.0",
   "description": "基于Kite AI支付的多Agent工资结算系统",
-  "main": "src/index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node server.js",
     "server": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "install": "npm install && cd frontend && npm install"
   },
   "dependencies": {
     "body-parser": "^2.2.2",
