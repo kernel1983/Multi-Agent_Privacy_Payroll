@@ -1,94 +1,43 @@
 <template>
   <div class="payroll-task">
-    <!-- <h1>发薪任务</h1> -->
+    <h1>发薪流程</h1>
 
-    <!-- 员工列表 -->
-    <div class="employees-list">
-      <div class="list-header">
-        <h3>员工列表</h3>
-        <button
-          class="submit-btn"
-          @click="startPayrollProcess"
-          :disabled="isSubmitting || employees.length === 0"
-        >
-          {{ isSubmitting ? "处理中..." : "启动发薪流程" }}
-        </button>
-      </div>
-      <div class="employees-table">
-        <table>
-          <thead>
-            <tr>
-              <th>员工ID</th>
-              <th>员工姓名</th>
-              <th>员工地址</th>
-              <th>金额</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="employee in employees" :key="employee.id">
-              <td>{{ employee.id }}</td>
-              <td>{{ employee.name }}</td>
-              <td>{{ employee.address }}</td>
-              <td>
-                {{ employee.amount }}
-                <span class="encrypted-badge small">已加密</span>
-              </td>
-            </tr>
-            <tr v-if="employees.length === 0">
-              <td colspan="4" class="no-data">暂无员工数据</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="payroll-options">
+      <h3>核心支付流程</h3>
+      <p>HR Agent → Payroll Agent → Employee Agent</p>
+      <button
+        class="submit-btn"
+        @click="startPayrollProcess"
+        :disabled="isSubmitting"
+      >
+        {{ isSubmitting ? "处理中..." : "启动发薪流程" }}
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref } from "vue";
 import axios from "axios";
 
 const isSubmitting = ref(false);
-const employees = ref([]);
-
-// 获取员工列表
-const getEmployees = async () => {
-  try {
-    // 这里可以从后端API获取员工列表
-    // 暂时使用模拟数据
-    employees.value = [
-      {
-        id: "emp001",
-        name: "张三",
-        address: "0x1234567890123456789012345678901234567890",
-        amount: "10000",
-      },
-      {
-        id: "emp002",
-        name: "李四",
-        address: "0x0987654321098765432109876543210987654321",
-        amount: "15000",
-      },
-      {
-        id: "emp003",
-        name: "王五",
-        address: "0x1122334455667788990011223344556677889900",
-        amount: "12000",
-      },
-    ];
-  } catch (error) {
-    console.error("Failed to get employees:", error);
-  }
-};
 
 // 启动发薪流程
 const startPayrollProcess = async () => {
-  if (employees.value.length === 0) return;
-
   isSubmitting.value = true;
   try {
+    // 简化版本：使用固定的员工数据
+    const employees = [
+      {
+        id: "emp001",
+        name: "Employee",
+        address: "0x1122334455667788990011223344556677889900",
+        amount: "10000",
+      },
+    ];
+
     const response = await axios.post("http://localhost:3000/api/runPayroll", {
-      employees: employees.value,
+      employees: employees,
     });
 
     console.log("Payroll process started:", response.data);
@@ -100,53 +49,47 @@ const startPayrollProcess = async () => {
     isSubmitting.value = false;
   }
 };
-
-// 页面加载时获取员工列表
-onMounted(() => {
-  getEmployees();
-});
 </script>
 
 <style scoped>
 .payroll-task {
   padding: 20px;
+  text-align: center;
 }
 
-.employees-list {
-  margin-top: 20px;
-}
-
-.list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.list-header h3 {
-  margin: 0;
+.payroll-task h1 {
+  margin-bottom: 30px;
   color: #333;
 }
 
-.encrypted-badge {
-  background: #e6f7ee;
-  color: #137333;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
+.payroll-options {
+  max-width: 600px;
+  margin: 0 auto;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 40px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.encrypted-badge.small {
-  font-size: 10px;
-  padding: 2px 8px;
+.payroll-options h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 18px;
+}
+
+.payroll-options p {
+  margin-bottom: 30px;
+  color: #666;
+  font-size: 16px;
 }
 
 .submit-btn {
-  background: #fff;
-  color: #333;
-  border: 1px solid #e0e0e0;
+  background: #333;
+  color: #fff;
+  border: none;
   border-radius: 12px;
-  padding: 12px 24px;
+  padding: 15px 30px;
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
@@ -154,50 +97,17 @@ onMounted(() => {
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #f5f5f5;
-  border-color: #d0d0d0;
+  background: #555;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .submit-btn:disabled {
   background: #f5f5f5;
   color: #999;
-  border-color: #e0e0e0;
+  border: 1px solid #e0e0e0;
   cursor: not-allowed;
-}
-
-.employees-table {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #f5f5f5;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-th,
-td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-}
-
-th {
-  background: #f0f0f0;
-  font-weight: 500;
-  color: #333;
-}
-
-tr:hover {
-  background: #fafafa;
-}
-
-.no-data {
-  text-align: center;
-  padding: 40px;
-  color: #999;
+  transform: none;
+  box-shadow: none;
 }
 </style>

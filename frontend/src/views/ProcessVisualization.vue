@@ -2,6 +2,16 @@
   <div class="process-visualization">
     <h1>流程可视化</h1>
 
+    <!-- MetaMask连接状态 -->
+    <div class="metamask-status">
+      <button class="metamask-btn" @click="connectWallet" :disabled="isLoading">
+        {{ walletConnected ? "已连接钱包" : "连接MetaMask" }}
+      </button>
+      <span v-if="walletConnected" class="wallet-address">{{
+        walletAddress
+      }}</span>
+    </div>
+
     <!-- 时间线 -->
     <div class="timeline">
       <h3>发薪流程时间线</h3>
@@ -63,6 +73,8 @@ import { ref, onMounted, watch } from "vue";
 import axios from "axios";
 
 const isLoading = ref(false);
+const walletConnected = ref(false);
+const walletAddress = ref("");
 const processSteps = ref([
   {
     title: "初始化流程",
@@ -98,10 +110,86 @@ const processSteps = ref([
 
 const processLogs = ref([]);
 
+// MetaMask连接
+const connectWallet = async () => {
+  if (typeof window.ethereum === "undefined") {
+    alert("请安装MetaMask钱包");
+    return;
+  }
+
+  try {
+    isLoading.value = true;
+    // 请求连接钱包
+    const accounts = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
+
+    walletAddress.value = accounts[0];
+    walletConnected.value = true;
+
+    // 检查网络
+    await checkNetwork();
+
+    processLogs.value.push({
+      time: new Date().toLocaleString(),
+      level: "success",
+      message: `MetaMask钱包连接成功: ${walletAddress.value}`,
+    });
+  } catch (error) {
+    console.error("连接钱包失败:", error);
+    processLogs.value.push({
+      time: new Date().toLocaleString(),
+      level: "error",
+      message: `连接钱包失败: ${error.message}`,
+    });
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// 检查网络
+const checkNetwork = async () => {
+  const chainId = await window.ethereum.request({ method: "eth_chainId" });
+  const expectedChainId = "0x940"; // KiteAI Testnet (2368)
+
+  if (chainId !== expectedChainId) {
+    try {
+      // 尝试切换网络
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: expectedChainId }],
+      });
+      processLogs.value.push({
+        time: new Date().toLocaleString(),
+        level: "success",
+        message: "网络切换成功: KiteAI Testnet",
+      });
+    } catch (error) {
+      console.error("网络切换失败:", error);
+      processLogs.value.push({
+        time: new Date().toLocaleString(),
+        level: "error",
+        message: `网络切换失败: ${error.message}`,
+      });
+    }
+  } else {
+    processLogs.value.push({
+      time: new Date().toLocaleString(),
+      level: "success",
+      message: "当前网络正确: KiteAI Testnet",
+    });
+  }
+};
+
 // 获取流程状态
 const getProcessStatus = async () => {
   isLoading.value = true;
   try {
+    // 检查钱包连接状态
+    if (!walletConnected.value) {
+      await connectWallet();
+    }
+
     // 这里可以从后端API获取流程状态
     // 暂时模拟流程执行
     simulateProcessExecution();
@@ -150,7 +238,7 @@ const simulateProcessExecution = () => {
       processLogs.value.push({
         time: new Date().toLocaleString(),
         level: "success",
-        message: "发薪流程完成，共成功发放 3 笔工资",
+        message: "发薪流程完成，共成功发放 1 笔工资",
       });
     }
   };
@@ -186,6 +274,58 @@ onMounted(() => {
 <style scoped>
 .process-visualization {
   padding: 20px;
+}
+
+/* MetaMask连接状态 */
+.metamask-status {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 30px;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.metamask-btn {
+  padding: 10px 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #333;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+}
+
+.metamask-btn:hover:not(:disabled) {
+  background: #555;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.metamask-btn:disabled {
+  background: #f5f5f5;
+  color: #999;
+  border: 1px solid #e0e0e0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.wallet-address {
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  color: #333;
+  background: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 时间线样式 */
